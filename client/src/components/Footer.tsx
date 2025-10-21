@@ -92,13 +92,14 @@ export function Footer() {
               <li>Bhubaneswar, Odisha, India</li>
               <li>
                 <a
-                  href="mailto:contact@fusionwebsolution.com"
+                  href="mailto:thefusionwebsolution@gmail.com"
                   className="hover:text-primary transition-colors"
                 >
-                  contact@fusionwebsolution.com
+                  thefusionwebsolution@gmail.com
                 </a>
               </li>
-              <li>+91-XXXXXXXXXX</li>
+              <li>+91-7210503398</li>
+              <li>+91-9934492605</li>
             </ul>
           </div>
         </div>
