@@ -1,21 +1,10 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { Mail, Phone, MapPin, Linkedin, Instagram, Facebook } from "lucide-react";
 import { FaXTwitter } from "react-icons/fa6";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import {
   Select,
   SelectContent,
@@ -24,48 +13,62 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { insertContactSubmissionSchema, type InsertContactSubmission } from "@shared/schema";
-import { apiRequest } from "@/lib/queryClient";
 
 export function Contact() {
   const { toast } = useToast();
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    service: "",
+    message: "",
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const form = useForm<InsertContactSubmission>({
-    resolver: zodResolver(insertContactSubmissionSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-      service: "",
-      message: "",
-    },
-  });
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
 
-  const mutation = useMutation({
-    mutationFn: async (data: InsertContactSubmission) => {
-      return await apiRequest("POST", "/api/contact", data);
-    },
-    onSuccess: () => {
-      setIsSuccess(true);
-      form.reset();
-      toast({
-        title: "Success!",
-        description: "We've received your message and will get back to you soon.",
+  const handleSelectChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, service: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
       });
-      setTimeout(() => setIsSuccess(false), 5000);
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
 
-  const onSubmit = (data: InsertContactSubmission) => {
-    mutation.mutate(data);
+      if (res.ok) {
+        setIsSuccess(true);
+        setFormData({ name: "", email: "", phone: "", service: "", message: "" });
+        toast({
+          title: "Success!",
+          description: "We've received your message and will get back to you soon.",
+        });
+        setTimeout(() => setIsSuccess(false), 5000);
+      } else {
+        const payload = await res.json().catch(() => ({}));
+        setError(payload?.error || "Failed to send message. Please try again later.");
+      }
+    } catch (err) {
+      setError("Network error. Please check your connection and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -93,118 +96,86 @@ export function Contact() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
           <div className="space-y-8">
             <Card className="p-8 bg-card/50 backdrop-blur-sm border-card-border">
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                  <FormField
-                    control={form.control}
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {isSuccess && (
+                  <div className="text-green-500 font-medium">Message sent successfully.</div>
+                )}
+                {error && (
+                  <div className="text-red-500 font-medium">{error}</div>
+                )}
+
+                <div>
+                  <label className="block mb-2 font-medium">Name</label>
+                  <Input
                     name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Your name"
-                            {...field}
-                            data-testid="input-name"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    placeholder="Your name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    data-testid="input-name"
                   />
+                </div>
 
-                  <FormField
-                    control={form.control}
+                <div>
+                  <label className="block mb-2 font-medium">Email</label>
+                  <Input
                     name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="email"
-                            placeholder="your@email.com"
-                            {...field}
-                            data-testid="input-email"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    type="email"
+                    placeholder="your@email.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    data-testid="input-email"
                   />
+                </div>
 
-                  <FormField
-                    control={form.control}
+                <div>
+                  <label className="block mb-2 font-medium">Phone (Optional)</label>
+                  <Input
                     name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone (Optional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="tel"
-                            placeholder="+91-XXXXXXXXXX"
-                            {...field}
-                            data-testid="input-phone"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    type="tel"
+                    placeholder="+91-7210503398"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    data-testid="input-phone"
                   />
+                </div>
 
-                  <FormField
-                    control={form.control}
-                    name="service"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Service Interested In</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger data-testid="select-service">
-                              <SelectValue placeholder="Select a service" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="website">Website Development</SelectItem>
-                            <SelectItem value="app">Mobile App Development</SelectItem>
-                            <SelectItem value="marketing">Digital Marketing</SelectItem>
-                            <SelectItem value="full-stack">Full-Stack Solution</SelectItem>
-                            <SelectItem value="other">Other</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                <div>
+                  <label className="block mb-2 font-medium">Service Interested In</label>
+                  <Select onValueChange={handleSelectChange} value={formData.service}>
+                    <SelectTrigger data-testid="select-service">
+                      <SelectValue placeholder="Select a service" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="website">Website Development</SelectItem>
+                      <SelectItem value="app">Mobile App Development</SelectItem>
+                      <SelectItem value="marketing">Digital Marketing</SelectItem>
+                      <SelectItem value="full-stack">Full-Stack Solution</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                  <FormField
-                    control={form.control}
+                <div>
+                  <label className="block mb-2 font-medium">Message</label>
+                  <Textarea
                     name="message"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Message</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Tell us about your project..."
-                            className="min-h-32"
-                            {...field}
-                            data-testid="textarea-message"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    placeholder="Tell us about your project..."
+                    className="min-h-32"
+                    value={formData.message}
+                    onChange={handleChange}
+                    data-testid="textarea-message"
                   />
+                </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full bg-chart-3 hover:bg-chart-3/90 text-white"
-                    disabled={mutation.isPending}
-                    data-testid="button-submit-contact"
-                  >
-                    {mutation.isPending ? "Sending..." : isSuccess ? "Sent Successfully!" : "Send Message"}
-                  </Button>
-                </form>
-              </Form>
+                <Button
+                  type="submit"
+                  className="w-full bg-chart-3 hover:bg-chart-3/90 text-white"
+                  disabled={isSubmitting}
+                  data-testid="button-submit-contact"
+                >
+                  {isSubmitting ? "Sending..." : isSuccess ? "Sent Successfully!" : "Send Message"}
+                </Button>
+              </form>
             </Card>
 
             <div className="text-sm text-muted-foreground text-center">
@@ -219,7 +190,7 @@ export function Contact() {
               </h3>
               <div className="space-y-4">
                 <a
-                  href="mailto:contact@fusionwebsolution.com"
+                  href="mailto:thefusionwebsolution@gmail.com"
                   className="flex items-center gap-4 p-4 rounded-lg hover-elevate active-elevate-2 transition-colors"
                   data-testid="link-email"
                 >
@@ -229,13 +200,13 @@ export function Contact() {
                   <div>
                     <div className="font-medium">Email</div>
                     <div className="text-sm text-muted-foreground">
-                      contact@fusionwebsolution.com
+                      thefusionwebsolution@gmail.com
                     </div>
                   </div>
                 </a>
 
                 <a
-                  href="tel:+91XXXXXXXXXX"
+                  href="tel:+917210503398"
                   className="flex items-center gap-4 p-4 rounded-lg hover-elevate active-elevate-2 transition-colors"
                   data-testid="link-phone"
                 >
@@ -245,7 +216,9 @@ export function Contact() {
                   <div>
                     <div className="font-medium">Phone</div>
                     <div className="text-sm text-muted-foreground">
-                      +91-XXXXXXXXXX
+                      +91-7210503398
+                      <br />
+                      +91-9934492605
                     </div>
                   </div>
                 </a>

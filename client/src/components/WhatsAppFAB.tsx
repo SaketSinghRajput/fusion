@@ -2,7 +2,7 @@ import { MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function WhatsAppFAB() {
-  const whatsappNumber = "+91XXXXXXXXXX";
+  const whatsappNumber = "+919934492605";
   const message = "Hi! I'd like to discuss a project with Fusion Web Solution.";
 
   const openWhatsApp = () => {

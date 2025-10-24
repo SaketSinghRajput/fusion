@@ -235,9 +235,9 @@ Contact:
 
 Form validation; success/failure states; animated success
 
-Email: contact@fusionwebsolution.com (or placeholder)
+Email: thefusionwebsolution@gmail.com (or placeholder)
 
-Phone: +91-XXXXXXXXXX
+Phone: +91-7210503398, +91-9934492605
 
 WhatsApp button (always visible)
 
