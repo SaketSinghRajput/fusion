@@ -21,7 +21,7 @@ export function Navigation({ activeSection }: NavigationProps) {
   const navLinks = [
     { href: "#home", label: "Home" },
     { href: "#services", label: "Services" },
-    { href: "#pricing", label: "Pricing" },
+    // { href: "#pricing", label: "Pricing" },
     { href: "#portfolio", label: "Portfolio" },
     { href: "#contact", label: "Contact" },
   ];
